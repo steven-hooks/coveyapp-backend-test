@@ -1,6 +1,6 @@
 package com.covey.coveyapp.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -9,12 +9,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ch.hsr.geohash.BoundingBox;
+import ch.hsr.geohash.WGS84Point;
+
 import com.covey.coveyapp.GeohashZone;
 import com.covey.coveyapp.GeohashZone.Proximity;
 import com.covey.coveyapp.Profile;
-
-import ch.hsr.geohash.BoundingBox;
-import ch.hsr.geohash.WGS84Point;
 
 public class TestGeohashZone {
 
@@ -28,6 +28,9 @@ public class TestGeohashZone {
 	private static Profile _profileFar;
 	private static WGS84Point _closeUpperLeft;
 	
+	//TODO: Add tests for inclusion
+	//TODO: Add tests for far
+		
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
@@ -42,6 +45,7 @@ public class TestGeohashZone {
 		//this value is not super meaningful, it gets changed a lot by different tests. this however is has it assigned to close... kinda silly
 		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0000001, _closeUpperLeft.getLongitude() + .001);
 		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .1, _closeUpperLeft.getLongitude() + .1);
+		_profileFar = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .1, _closeUpperLeft.getLongitude() + .1);
 	}	
 	
 	//sanity test - make sure distance is calculated correctly
@@ -73,8 +77,9 @@ public class TestGeohashZone {
 	
 	@Test
 	public void testGetBestProximityNearbyMaxBoundry() {
-		//0.4928964831637052 miles
-		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0115, _closeUpperLeft.getLongitude() + .01);
+		// passes at 0.8373856841881587 miles
+		// fails at 0.8379558510785096 miles
+		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .00899999, _closeUpperLeft.getLongitude() + .01);
 		System.out.println("Proximity nearby max distance = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileNear)));
 		Proximity proximity = GeohashZone.getBestProximity(_profileClose, _profileNear);
 		Assert.assertEquals(Proximity.NEARBY, proximity);
@@ -91,8 +96,8 @@ public class TestGeohashZone {
 	
 	@Test
 	public void testGetBestProximityOuterMaxBoundry() {
-		//1.0090787322269674 miles
-		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .117, _closeUpperLeft.getLongitude() + .01);
+		//0.9968942677241583 miles
+		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .113, _closeUpperLeft.getLongitude() + .01);
 		System.out.println("Proximity outer distance (outside range) = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileOuter)));
 		Proximity proximity = GeohashZone.getBestProximity(_profileClose, _profileOuter);
 		Assert.assertEquals(Proximity.OUTERLIMIT, proximity);
@@ -158,7 +163,8 @@ public class TestGeohashZone {
 
 	@Test
 	public void testDetermineGeohashLocation() {
-		fail("Not yet implemented");
+		String ghString = GeohashZone.determineGeohashLocation(_profileClose);
+		Assert.fail("Not implemented yet");
 	}
 
 	@After
