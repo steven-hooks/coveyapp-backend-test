@@ -92,9 +92,9 @@ public class TestGeohashZone {
 	
 	@Test
 	public void testGetBestProximityOuterMaxBoundry() {
-		//0.9968942677241583 miles
-		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .113, _closeUpperLeft.getLongitude() + .01);
-		System.out.println("Proximity outer distance (outside range) = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileOuter)));
+		//7.82 miles
+		_profileOuter = TestUtilities.makeProfilePositionOnly(_boxClose.getCenterPoint().getLatitude() + .113, _boxClose.getCenterPoint().getLongitude() + .01);
+		System.out.println("Proximity outer max distance = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileOuter)));
 		Proximity proximity = GeohashZone.getBestProximity(_profileClose, _profileOuter);
 		Assert.assertEquals(Proximity.OUTERLIMIT, proximity);
 	}
@@ -106,7 +106,7 @@ public class TestGeohashZone {
 	}
 
 	public void testIsWithinNearbyZoneFalse() {
-		fail("Not yet implemented");
+		Assert.assertFalse(GeohashZone.isWithinNearbyZone(_profileOuter, _profileNear));
 	}
 	
 	@Test
