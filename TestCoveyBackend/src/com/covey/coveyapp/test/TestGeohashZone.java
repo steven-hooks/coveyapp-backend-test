@@ -2,12 +2,16 @@ package com.covey.coveyapp.test;
 
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runners.Parameterized.Parameters;
 
 import ch.hsr.geohash.BoundingBox;
 import ch.hsr.geohash.WGS84Point;
@@ -28,8 +32,8 @@ public class TestGeohashZone {
 	private static Profile _profileFar;
 	private static WGS84Point _closeUpperLeft;
 	
-	//TODO: Add tests for inclusion
-	//TODO: Add tests for far
+	//TODO: Add tests for changing box
+	//TODO: Add tests for selecting max profiles across zones, depending on positioning
 		
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -42,23 +46,15 @@ public class TestGeohashZone {
 		_boxClose = GeohashZone.getCloseZoneBoundingBox(_profileClose);
 		_closeUpperLeft = _boxClose.getUpperLeft();
 		
-		//this value is not super meaningful, it gets changed a lot by different tests. this however is has it assigned to close... kinda silly
-		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0000001, _closeUpperLeft.getLongitude() + .001);
-		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .1, _closeUpperLeft.getLongitude() + .1);
-		_profileFar = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .1, _closeUpperLeft.getLongitude() + .1);
-	}	
-	
-	//sanity test - make sure distance is calculated correctly
-	@Test
-	public void testDistanceIsCorrect(){
-		WGS84Point p1 = new WGS84Point(_profileClose.getLatitude(), _profileClose.getLongitude());		
-		WGS84Point p2 = new WGS84Point(_profileNear.getLatitude(), _profileNear.getLongitude());
-		double distance = TestUtilities.getDistanceBetween2Points(p1, p2);
-		System.out.println("DistanceIsCorrect distance = "+ distance);
+		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0089, _closeUpperLeft.getLongitude() + .01);
+		_boxNear = GeohashZone.getNearbyZoneBoundingBox(_profileNear);
 		
-		Assert.assertTrue(distance > .05 && distance < .1 );
-	}
-
+		_profileOuter = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .1, _closeUpperLeft.getLongitude() + .1);
+		_boxOuter = GeohashZone.getOuterLimitZoneBoundingBox(_profileOuter);
+		
+		_profileFar = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + 1, _closeUpperLeft.getLongitude() + 1);
+	}	
+		
 	@Test
 	public void testGetBestProximityCloseDistEq0() {
 		Proximity proximity = GeohashZone.getBestProximity(_profileClose, _profileClose);
@@ -79,7 +75,7 @@ public class TestGeohashZone {
 	public void testGetBestProximityNearbyMaxBoundry() {
 		// passes at 0.8373856841881587 miles
 		// fails at 0.8379558510785096 miles
-		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .00899999, _closeUpperLeft.getLongitude() + .01);
+		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0089, _closeUpperLeft.getLongitude() + .01);
 		System.out.println("Proximity nearby max distance = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileNear)));
 		Proximity proximity = GeohashZone.getBestProximity(_profileClose, _profileNear);
 		Assert.assertEquals(Proximity.NEARBY, proximity);
@@ -103,18 +99,9 @@ public class TestGeohashZone {
 		Assert.assertEquals(Proximity.OUTERLIMIT, proximity);
 	}
 
+	//this seems like it could be problematic when moving into close zone because near contains close
 	@Test
 	public void testUserLeftNearbyZone() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testIsWithinOuterLimitZone() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testIsWithinNearbyZoneTrue() {
 		fail("Not yet implemented");
 	}
 
@@ -133,9 +120,7 @@ public class TestGeohashZone {
 	@Test
 	public void testIsWithinCloseZoneTrue() {
 		//0.06909342260762119 miles
-		_profileNear = TestUtilities.makeProfilePositionOnly(_closeUpperLeft.getLatitude() + .0000001, _closeUpperLeft.getLongitude() + .001);
-		
-		//DAVE - the distance is 0.0690 this test should pass, yes?
+		_profileNear = TestUtilities.makeProfilePositionOnly(_boxClose.getCenterPoint().getLatitude() + .0001, _boxClose.getCenterPoint().getLongitude()+.001);		
 		System.out.println("WithinCloseTrue distance = "  + TestUtilities.getDistanceBetween2Points(makeWGS(_profileClose), makeWGS(_profileNear)));
 		Assert.assertTrue(GeohashZone.isWithinCloseZone(_profileClose, _profileNear));
 	}
@@ -157,16 +142,112 @@ public class TestGeohashZone {
 	}
 	
 	@Test
-	public void testIsWithinGeohashBoundingBox() {
-		fail("Not yet implemented");
+	public void testDetermineGeohashLocation() {
+		String ghString = GeohashZone.determineGeohashLocation(_profileClose);
+		Assert.fail("Not implemented yet");		
+	}
+	
+	@Test
+	public void testIsWithinOuterLimitZone_Outer() {
+		Assert.assertTrue(GeohashZone.isWithinOuterLimitZone(_profileOuter,_profileOuter));
+	}
+	
+	@Test
+	public void testIsWithinOuterLimitZone_Near() {		
+		Assert.assertTrue(GeohashZone.isWithinOuterLimitZone(_profileNear,_profileOuter));			
+	}
+	
+	@Test
+	public void testIsWithinOuterLimitZone_Close() {
+		Assert.assertTrue(GeohashZone.isWithinOuterLimitZone(_profileClose,_profileOuter));		
+	}
+	
+	public void testIsWithinOuterLimitZone_Far() {
+		Assert.assertFalse(GeohashZone.isWithinOuterLimitZone(_profileFar,_profileOuter));
 	}
 
 	@Test
-	public void testDetermineGeohashLocation() {
-		String ghString = GeohashZone.determineGeohashLocation(_profileClose);
-		Assert.fail("Not implemented yet");
+	public void testIsWithinNearbyLimitZone_Near() {		
+		Assert.assertTrue(GeohashZone.isWithinOuterLimitZone(_profileNear,_profileNear));			
 	}
-
+	
+	@Test
+	public void testIsWithinNearbyLimitZone_Close() {
+		Assert.assertTrue(GeohashZone.isWithinOuterLimitZone(_profileClose,_profileNear));		
+	}
+	
+	@Test
+	public void testIsWithinNearbyLimitZone_Outer() {		
+		Assert.assertFalse(GeohashZone.isWithinOuterLimitZone(_profileOuter,_profileNear));			
+	}
+	
+	public void testIsWithinNearbyLimitZone_Far() {
+		Assert.assertFalse(GeohashZone.isWithinOuterLimitZone(_profileFar,_profileNear));
+	}
+		    
+	@Test
+	public void testIsWithinGeohashBoundingBox_CloseClose() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxClose, _profileClose));
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_CloseNear() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxClose, _profileNear));
+	}
+	
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_CloseOuter() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxClose, _profileOuter));	
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_CloseFar() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxClose, _profileFar));
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_NearClose() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxNear, _profileClose));
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_NearNear() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxNear, _profileNear));
+	}	
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_NearOuter() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxNear, _profileOuter));	
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_NearFar() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxNear, _profileFar));
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_OuterClose() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxOuter, _profileClose));
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_OuterNear() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxOuter, _profileNear));
+	}
+	
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_OuterOuter() {
+		Assert.assertTrue(GeohashZone.isWithinGeohashBoundingBox(_boxOuter, _profileOuter));	
+	}
+	
+	@Test
+	public void testIsWithinGeohashBoundingBox_OuterFar() {
+		Assert.assertFalse(GeohashZone.isWithinGeohashBoundingBox(_boxOuter, _profileFar));
+	}
+	//Inclusion tests - end
+	
 	@After
 	public void tearDown() throws Exception {
 		_profileClose = null;
@@ -183,5 +264,5 @@ public class TestGeohashZone {
 	private static WGS84Point makeWGS(Profile profile){
 		return new WGS84Point(profile.getLatitude(), profile.getLongitude());
 	}
-	
 }
+

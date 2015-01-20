@@ -38,7 +38,7 @@ public class TestUtilities {
 	 * Gets the distance, in miles, between 2 points
 	 * @param point1
 	 * @param point2
-	 * @return 
+	 * @return distance in miles
 	 */
 	public static double getDistanceBetween2Points(WGS84Point point1,WGS84Point point2) {
 		LatLng p1 = new LatLng(point1.getLatitude(), point1.getLongitude());
